@@ -626,6 +626,236 @@ void ExceptionHandler(ExceptionType exceptiontype, int vaddr)
 	  }
 	  break;
 	}
+	
+	#ifdef ETUDIANTS_TP
+	// Semaphore
+	case SC_SEM_CREATE:{
+		// the semaphore create system call
+		DEBUG('e', (char*)"Debug: semaphore create call.\n");
+	  	int32_t count;
+	  	int size_name;
+	  	int addr_name;
+	  	addr_name = g_machine->ReadIntRegister(4);
+	  	size_name = GetLengthParam(addr_name);
+	  	char name[size_name];
+	  	GetStringParam(addr_name, name, size_name);
+	  	count = g_machine->ReadIntRegister(5);
+	  	Semaphore *ptSem = new Semaphore(name, count);
+	  	g_machine->WriteIntRegister(2,g_object_ids->AddObject(ptSem));  
+	  	g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  	break;
+	}
+	case SC_SEM_DESTROY:{
+		// the semaphore destroy system call
+		DEBUG('e', (char*)"Debug: semaphore destroy call.\n");
+	  	int32_t sid;
+	  	Semaphore* ptSem;
+	  	sid = g_machine->ReadIntRegister(4);
+	  	ptSem = (Semaphore *)g_object_ids->SearchObject(sid);
+	  	if(ptSem && ptSem->type == SEMAPHORE_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptSem->~Semaphore();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	case SC_P:{
+		// the P semaphore system call
+		DEBUG('e', (char*)"Debug: P semaphore call.\n");
+	  	int32_t sid;
+	  	Semaphore* ptSem;
+	  	sid = g_machine->ReadIntRegister(4);
+	  	ptSem = (Semaphore *)g_object_ids->SearchObject(sid);
+	  	if(ptSem && ptSem->type == SEMAPHORE_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptSem->P();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	case SC_V:{
+		// the V semaphore system call
+		DEBUG('e', (char*)"Debug: V semaphore call.\n");
+	  	int32_t sid;
+	  	Semaphore* ptSem;
+	  	sid = g_machine->ReadIntRegister(4);
+	  	ptSem = (Semaphore *)g_object_ids->SearchObject(sid);
+	  	if(ptSem && ptSem->type == SEMAPHORE_TYPE){
+	  		ptSem->V();
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		g_machine->WriteIntRegister(2,0);  
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	// Lock
+	case SC_LOCK_CREATE:{
+		// the lock create call
+		DEBUG('e', (char*)"Debug: lock create call.\n");
+	  	int size_name;
+	  	int addr_name;
+	  	addr_name = g_machine->ReadIntRegister(4);
+	  	size = GetLengthParam(addr_name);
+	  	char name[size_name];
+	  	GetStringParam(addr_name, name, size_name);
+	  	Lock *ptLock = new Lock(name);
+	  	g_machine->WriteIntRegister(2,g_object_ids->AddObject(ptLock);  
+	  	g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  	break;
+	}
+	case SC_LOCK_DESTROY:{
+		// the lock destroy call
+		DEBUG('e', (char*)"Debug: lock destroy call.\n");
+	  	int32_t lid;
+	  	Lock* ptLock;
+	  	lid = g_machine->ReadIntRegister(4);
+	  	ptLock = (Lock *)g_object_ids->SearchObject(lid);
+	  	if(ptLock && ptLock->type == LOCK_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptLock->~Lock();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	case SC_LOCK_ACQUIRE:{
+		// the Lock acquire system call
+		DEBUG('e', (char*)"Debug: Lock acquire call.\n");
+	  	int32_t lid;
+	  	Lock* ptLock;
+	  	lid = g_machine->ReadIntRegister(4);
+	  	ptLock = (Lock *)g_object_ids->SearchObject(sid);
+	  	if(ptLock && ptLock->type == Lock_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptLock->LockAcquire();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	case SC_LOCK_RELEASE:{
+		// the lock release system call
+		DEBUG('e', (char*)"Debug: Lock release call.\n");
+	  	int32_t lid;
+	  	Lock* ptLock;
+	  	lid = g_machine->ReadIntRegister(4);
+	  	ptLock = (Lock *)g_object_ids->SearchObject(sid);
+	  	if(ptLock && ptLock->type == Lock_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptLock->LockRelease();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	// Condition
+	case SC_COND_CREATE:{
+		// the condition create system call
+		DEBUG('e', (char*)"Debug: Condition create call.\n");
+		int size_name;
+	  	int addr_name;
+	  	addr_name = g_machine->ReadIntRegister(4);
+	  	size = GetLengthParam(addr_name);
+	  	char name[size_name];
+	  	GetStringParam(addr_name, name, size_name);
+	  	Condition *ptCond = new Condition(name);
+	  	g_machine->WriteIntRegister(2,g_object_ids->AddObject(ptCond);  
+	  	g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  	break;
+	}
+	case SC_COND_DESTROY:{
+		// the condition destroy call
+		DEBUG('e', (char*)"Debug: Condition destroy call.\n");
+	  	int32_t cid;
+	  	Condition* ptCond;
+	  	cid = g_machine->ReadIntRegister(4);
+	  	ptCond = (Condition *)g_object_ids->SearchObject(cid);
+	  	if(ptCondition && ptCond->type == CONDITION_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptCondition->~Condition();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	case SC_COND_WAIT:{
+		// the condtion wait call
+		DEBUG('e', (char*)"Debug: Condition wait call.\n");
+	  	int32_t cid;
+	  	Condition* ptCond;
+	  	cid = g_machine->ReadIntRegister(4);
+	  	ptCond = (Condition *)g_object_ids->SearchObject(cid);
+	  	if(ptCondition && ptCond->type == CONDITION_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptCondition->Wait();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	case SC_COND_SIGNAL:{
+		// the condtion signal call
+		DEBUG('e', (char*)"Debug: Condition signal call.\n");
+	  	int32_t cid;
+	  	Condition* ptCond;
+	  	cid = g_machine->ReadIntRegister(4);
+	  	ptCond = (Condition *)g_object_ids->SearchObject(cid);
+	  	if(ptCondition && ptCond->type == CONDITION_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptCondition->Signal();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	case SC_COND_BROADCAST:{
+		// the condtion broadcast call
+		DEBUG('e', (char*)"Debug: Condition broadcast call.\n");
+	  	int32_t cid;
+	  	Condition* ptCond;
+	  	cid = g_machine->ReadIntRegister(4);
+	  	ptCond = (Condition *)g_object_ids->SearchObject(cid);
+	  	if(ptCondition && ptCond->type == CONDITION_TYPE){
+	  		g_machine->WriteIntRegister(2,0);  
+	  		g_syscall_error->SetMsg((char*)"",NO_ERROR);
+	  		ptCondition->Broadcast();
+	  	}
+	  	else{
+	  		g_machine->WriteIntRegister(2,ERROR);
+	  		g_syscall_error->SetMsg((char*)"",ERROR);
+	  	}
+	  	break;
+	}
+	#endif
 
        default:
          printf("Invalid system call number : %d\n", type);

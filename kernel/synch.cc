@@ -25,6 +25,7 @@
 #include "kernel/system.h"
 #include "kernel/scheduler.h"
 #include "kernel/synch.h"
+#include "machine/interrupt.h"
 
 //----------------------------------------------------------------------
 // Semaphore::Semaphore
@@ -76,8 +77,22 @@ Semaphore::~Semaphore()
 //----------------------------------------------------------------------
 void
 Semaphore::P() {
+
+  #ifndef ETUDIANTS_TP
   printf("**** Warning: method Semaphore::P is not implemented yet\n");
   exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP
+  value--;
+  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  if (value < 0){
+    Thread *t = g_current_thread;
+    queue->Append(t);
+    t->Sleep();
+  }
+  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  #endif
 }
 
 //----------------------------------------------------------------------
@@ -90,8 +105,22 @@ Semaphore::P() {
 //----------------------------------------------------------------------
 void
 Semaphore::V() {
-   printf("**** Warning: method Semaphore::V is not implemented yet\n");
-    exit(-1);
+
+  #ifndef ETUDIANTS_TP
+  printf("**** Warning: method Semaphore::V is not implemented yet\n");
+  exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP
+  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  if (!queue->IsEmpty()){
+    g_scheduler->ReadyToRun((Thread *) queue->Remove());
+  }
+  else{
+    value++;
+  }
+  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  #endif 
 }
 
 //----------------------------------------------------------------------
@@ -136,8 +165,25 @@ Lock::~Lock() {
 */
 //----------------------------------------------------------------------
 void Lock::Acquire() {
-   printf("**** Warning: method Lock::Acquire is not implemented yet\n");
-    exit(-1);
+
+  #ifndef ETUDIANTS_TP
+  printf("**** Warning: method Lock::Acquire is not implemented yet\n");
+  exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP
+  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  if(free){
+    owner = g_current_thread;
+    free = false;
+  }
+  else{
+    owner->Sleep();
+    sleepqueue->Append(owner);
+  }
+  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  #endif 
+
 }
 
 //----------------------------------------------------------------------
@@ -150,8 +196,24 @@ void Lock::Acquire() {
 */
 //----------------------------------------------------------------------
 void Lock::Release() {
-    printf("**** Warning: method Lock::Release is not implemented yet\n");
-    exit(-1);
+
+  #ifndef ETUDIANTS_TP
+  printf("**** Warning: method Lock::Release is not implemented yet\n");
+  exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP
+  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+  if(isHeldByCurrentThread()){
+    free = true;
+    owner = NULL;
+  }
+  else{
+    owner = (Thread *) sleepqueue->Remove();
+    g_scheduler->ReadyToRun(owner);
+  }
+  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  #endif
 }
 
 //----------------------------------------------------------------------
@@ -195,8 +257,21 @@ Condition::~Condition() {
 */	
 //----------------------------------------------------------------------
 void Condition::Wait() { 
-    printf("**** Warning: method Condition::Wait is not implemented yet\n");
-    exit(-1);
+
+  #ifndef ETUDIANTS_TP
+  printf("**** Warning: method Condition::Wait is not implemented yet\n");
+  exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP
+  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+    
+  Thread *t = g_current_thread;
+  waitqueue->Append(t);
+  t->Sleep();
+    
+  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  #endif 
 }
 
 //----------------------------------------------------------------------
@@ -206,8 +281,21 @@ void Condition::Wait() {
 */
 //----------------------------------------------------------------------
 void Condition::Signal() { 
-    printf("**** Warning: method Condition::Signal is not implemented yet\n");
-    exit(-1);
+
+  #ifndef ETUDIANTS_TP
+  printf("**** Warning: method Condition::Wait is not implemented yet\n");
+  exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP
+  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+    
+  if (!waitqueue->IsEmpty()){
+    g_scheduler->ReadyToRun((Thread *) waitqueue->Remove());
+  }
+    
+  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  #endif 
 }
 
 //----------------------------------------------------------------------
@@ -217,6 +305,19 @@ void Condition::Signal() {
 */
 //----------------------------------------------------------------------
 void Condition::Broadcast() { 
-  printf("**** Warning: method Condition::Broadcast is not implemented yet\n");
+
+  #ifndef ETUDIANT_TP
+  printf("**** Warning: method Condition::Wait is not implemented yet\n");
   exit(-1);
+  #endif ETUDIANT_TP
+
+  #ifndef ETUDIANT_TP
+  g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+    
+  while (!waitqueue->IsEmpty()){
+    g_scheduler->ReadyToRun((Thread *) waitqueue->Remove());
+  }
+    
+  g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+  #endif ETUDIANT_TP
 }

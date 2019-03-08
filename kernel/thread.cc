@@ -102,9 +102,26 @@ Thread::~Thread()
 int Thread::Start(Process *owner,
 		  int32_t func, int arg)
 {
-  ASSERT(process == NULL);
-  printf("**** Warning: method Thread::Start is not implemented yet\n");
-  exit(-1);
+	#ifndef ETUDIANTS_TP 
+	ASSERT(process == NULL);
+	printf("**** Warning: method Thread::Start is not implemented yet\n");
+	exit(-1);
+	#endif 
+	
+	
+	#ifdef ETUDIANTS_TP
+	
+	process = owner;
+	process->numThreads++;
+	stackPointer = owner->addrspace->StackAllocate();
+	int8_t *addr_simul = AllocBoundedArray(SIMULATORSTACKSIZE);
+	//intialisation du contexte
+	InitSimulatorContext(addr_simul, SIMULATORSTACKSIZE);
+	InitThreadContext(func, stackPointer, arg);
+	g_alive->Append(this);
+	g_scheduler->ReadyToRun(this);
+	return 0;
+	#endif 
 }
 
 //----------------------------------------------------------------------
@@ -253,14 +270,26 @@ Thread::CheckOverflow()
 void
 Thread::Finish ()
 {
-
+	#ifndef ETUDIANTS_TP 
     DEBUG('t', (char *)"Finishing thread \"%s\"\n", GetName());
  
     
-  printf("**** Warning: method Thread::Finish is not fully implemented yet\n");
+	printf("**** Warning: method Thread::Finish is not fully implemented yet\n");
 
-  // Go to sleep
-  Sleep();  // invokes SWITCH
+	// Go to sleep
+	Sleep();  // invokes SWITCH
+	#endif 
+	
+	
+	#ifdef ETUDIANTS_TP 
+	g_machine->interrupt->SetStatus(INTERRUPTS_OFF);
+	
+	g_thread_to_be_destroyed = this;
+  g_alive->RemoveItem(this);
+  Sleep();
+	
+	g_machine->interrupt->SetStatus(INTERRUPTS_ON);
+	#endif 
 
  }
 
@@ -352,8 +381,26 @@ Thread::Sleep ()
 void
 Thread::SaveProcessorState()
 {
+  #ifndef ETUDIANTS_TP 
   printf("**** Warning: method Thread::SaveProcessorState is not implemented yet\n");
   exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP 
+  int i = 0;
+  int j = 0;
+	while(i < NUM_FP_REGS){
+    /* code */
+    thread_context.float_registers[i] = g_machine->ReadFPRegister(i);
+    i++;
+  }
+  while(j < NUM_INT_REGS){
+    /* code */
+    thread_context.int_registers[i] = g_machine->ReadIntRegister(i);
+    j++;
+  }
+  thread_context.cc = g_machine->ReadCC();
+	#endif 
 }
 
 //----------------------------------------------------------------------
@@ -365,8 +412,29 @@ Thread::SaveProcessorState()
 void
 Thread::RestoreProcessorState()
 {
+  #ifndef ETUDIANTS_TP
   printf("**** Warning: method Thread::RestoreProcessorState is not implemented yet\n");
   exit(-1);
+  #endif 
+
+  #ifdef ETUDIANTS_TP
+  int i = 0;
+  int j = 0;
+  while(i < NUM_FP_REGS){
+    /* code */
+    g_machine->WriteFPRegister(i, thread_context.float_registers[i]);
+    i++;
+  }
+  while(j < NUM_INT_REGS){
+    /* code */
+    g_machine->WriteIntRegister(i, thread_context.int_registers[i]);
+    j++;
+  }
+  g_machine->WriteCC(thread_context.cc);
+  g_machine->mmu->translationTable = GetProcessOwner()->addrspace->translationTable;
+  
+
+  #endif 
 }
 
 //----------------------------------------------------------------------
